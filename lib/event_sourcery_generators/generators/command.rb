@@ -71,11 +71,6 @@ module EventSourceryGenerators
         @event_class_name ||= event_name.underscore.camelize
       end
 
-      # def erb_file(file)
-      #   path = File.join(self.class.source_root, file)
-      #   ERB.new(::File.binread(path), nil, "-", "@output_buffer").result(binding)
-      # end
-
       def erb_file(file)
         path = File.join(self.class.source_root, file)
         erb_content = ERB.new(::File.binread(path), trim_mode: "-", eoutvar: "@output_buffer")
