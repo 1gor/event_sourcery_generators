@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module EventSourceryGenerators
   module Generators
     class Project < Thor::Group
@@ -64,6 +66,10 @@ module EventSourceryGenerators
 
       def project_class_name
         @project_class_name ||= project_name.underscore.camelize
+      end
+
+      def self.exit_on_failure?
+        true
       end
     end
   end

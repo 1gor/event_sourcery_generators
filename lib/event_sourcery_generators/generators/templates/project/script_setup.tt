@@ -1,4 +1,4 @@
-#!/usr/bin/env sh -eou pipefail
+#!/usr/bin/env -S bash -eou pipefail
 
 echo
 echo "--- Installing bundled gems"

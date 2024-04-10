@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module EventSourceryGenerators
   module Generators
     class Reactor < Thor::Group
@@ -34,7 +36,9 @@ module EventSourceryGenerators
 
       def erb_file(file)
         path = File.join(self.class.source_root, file)
-        ERB.new(::File.binread(path), nil, "-", "@output_buffer").result(binding)
+        erb_content = ERB.new(::File.binread(path), trim_mode: "-", eoutvar: "@output_buffer")
+        erb_content.result(binding)
+
       end
     end
   end

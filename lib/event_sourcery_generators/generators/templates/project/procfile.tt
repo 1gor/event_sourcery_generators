@@ -1,2 +1,3 @@
 web: ./script/server
 processors: bundle exec rake run_processors
+pg: docker run --rm -p 5432:5432 --name "$(basename `pwd`)-pg" -e POSTGRES_USER=$USER -e POSTGRES_HOST_AUTH_METHOD=trust postgres
