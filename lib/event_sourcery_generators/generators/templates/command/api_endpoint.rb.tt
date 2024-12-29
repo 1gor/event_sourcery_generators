@@ -1,6 +1,1 @@
-    post '/<%= aggregate.pluralize %>/:aggregate_id/<%= command %>' do
-      command = Commands::<%= aggregate_class_name %>::<%= command_class_name %>::Command.new(json_params)
-      Commands::<%= aggregate_class_name %>::<%= command_class_name %>::CommandHandler.new.handle(command)
-      status 201
-    end
-
+    register <%= project_class_name %>::Commands::<%= aggregate_class_name %>::<%= command_class_name %>::ServerComponent

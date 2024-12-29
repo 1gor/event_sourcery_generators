@@ -1,7 +1,21 @@
+# frozen_string_literal: true
+
 $LOAD_PATH.unshift '.'
 
 task :environment do
   require 'config/environment'
+end
+
+def processors(db_connection, tracker)
+  processors = [
+      # Add your processors here, like so:
+      #
+      # EventSourceryTodoApp::Projections::CompletedTodos::Projector.new(
+      #   tracker: tracker,
+      #   db_connection: db_connection,
+      # ),
+  ]
+  processors
 end
 
 desc 'Run Event Stream Processors'
@@ -19,14 +33,6 @@ task run_processors: :environment do
   # Show our ESP logs in foreman immediately
   $stdout.sync = true
 
-  processors = [
-    # Add your processors here, like so:
-    #
-    # EventSourceryTodoApp::Projections::CompletedTodos::Projector.new(
-    #   tracker: tracker,
-    #   db_connection: db_connection,
-    # ),
-  ]
 
   EventSourcery::EventProcessing::ESPRunner.new(
     event_processors: processors,
@@ -34,9 +40,16 @@ task run_processors: :environment do
   ).start!
 end
 
+desc 'Setup Event Stream Processors'
+task setup_processors: :environment do
+  puts "Setting up Event Stream processors"
+
+  processors(<%= project_class_name %>.projections_database, <%= project_class_name %>.tracker).each(&:setup)
+end
+
 namespace :db do
   desc 'Create database'
-  task create: :environment do
+  task create: [:environment, :disconnect_db] do
     url = <%= project_class_name %>.config.database_url
     database_name = File.basename(url)
     database = Sequel.connect URI.join(url, '/template1').to_s
@@ -48,8 +61,16 @@ namespace :db do
     database.disconnect
   end
 
+  task :disconnect_db do
+    config = EventSourcery::Postgres.config
+    config.event_store_database.disconnect
+    config.projections_database.disconnect
+  rescue => e
+    p e.message
+  end
+
   desc 'Drop database'
-  task drop: :environment do
+  task drop: [:environment, :disconnect_db] do
     url = <%= project_class_name %>.config.database_url
     database_name = File.basename(url)
     database = Sequel.connect URI.join(url, '/template1').to_s
@@ -65,5 +86,26 @@ namespace :db do
     rescue StandardError => e
       puts "Could not create event store: #{e.class.name} #{e.message}"
     end
+  end
+end
+
+begin
+  require "rspec/core/rake_task"
+  RSpec::Core::RakeTask.new(:spec)
+  task default: :spec
+rescue LoadError
+end
+
+desc "List defined routes in web server"
+task :routes do
+  require "config/environment"
+  require "app/web/server"
+
+  <%= project_class_name %>::Server.routes.map do |method, routes|
+    routes.map { |r| r.first.to_s }.map do |route|
+      "#{method.rjust(7, " ")} #{route}"
+    end
+  end.flatten.sort.each do |route|
+    puts route
   end
 end

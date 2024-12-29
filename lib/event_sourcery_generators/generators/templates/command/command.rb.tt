@@ -4,14 +4,43 @@ module <%= project_class_name %>
   module Commands
     module <%= aggregate_class_name %>
       module <%= command_class_name %>
+        module ServerComponent
+          def self.registered(app)
+            app.post '/<%= aggregate.pluralize %>/:aggregate_id/<%= command %>' do
+              command = Commands::<%= aggregate_class_name %>::<%= command_class_name %>::Command.build(json_params)
+              Commands::<%= aggregate_class_name %>::<%= command_class_name %>::CommandHandler.new.handle(command)
+              status 201
+            end
+          end
+        end
+
         class Command
           attr_reader :aggregate_id, :payload
 
-          def initialize(params)
-            @aggregate_id = params.delete(:aggregate_id)
-            @payload = params # Select the parameters you want to allow
+          def self.build(params)
+            new(params).tap(&:validate)
           end
 
+          # @payload = params.slice(
+          #   :todo_id,
+          #   :title,
+          #   :description,
+          #   :due_date,
+          #   :stakeholder_email
+          # )
+          def initialize(params)
+            @payload = params # Select the parameters you want to allow
+            @aggregate_id = params.delete(:aggregate_id)
+
+          end
+
+          # raise BadRequest, 'todo_id is blank' if aggregate_id.nil?
+          # raise BadRequest, 'title is blank' if payload[:title].nil?
+          # begin
+          #   Date.parse(payload[:due_date]) if payload[:due_date]
+          # rescue ArgumentError
+          #   raise BadRequest, 'due_date is invalid'
+          # end
           def validate
             # Add validation here
           end
